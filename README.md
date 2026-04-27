@@ -52,12 +52,21 @@ make check
 
 Ese comando arranca el contenedor, verifica Docker, verifica Docker Compose y ejecuta el archivo `examples/hello/compose.yaml`.
 
+El ejemplo levanta dos servicios:
+
+- `db`: una base de datos PostgreSQL.
+- `alpine`: un contenedor Alpine que instala el cliente de PostgreSQL y ejecuta una consulta contra `db`.
+
 La salida esperada incluye algo como:
 
 ```text
 Docker Compose version v5.1.3
-hello-1  | Hello from Docker!
-hello-1 exited with code 0
+alpine-1  | Alpine conectado a PostgreSQL
+alpine-1  |     resultado
+alpine-1  | ------------------
+alpine-1  |  compose funciona
+alpine-1  | (1 row)
+alpine-1 exited with code 0
 ```
 
 ## Entrar Al Entorno Del Curso
@@ -79,7 +88,7 @@ Dentro del contenedor puedes ejecutar:
 ```bash
 docker version
 docker compose version
-docker compose -f examples/hello/compose.yaml up
+docker compose -f examples/hello/compose.yaml up --abort-on-container-exit --exit-code-from alpine
 ```
 
 ## Usar Tus Propios Archivos Compose
@@ -109,7 +118,7 @@ docker compose -f ruta/al/compose.yaml up
 - `Dockerfile`: define la imagen con Docker, Docker Compose, Bash, Git y Make.
 - `entrypoint.sh`: inicia el Docker daemon interno y después ejecuta el comando solicitado.
 - `Makefile`: comandos cortos para construir, probar y abrir una terminal.
-- `examples/hello/compose.yaml`: ejemplo mínimo para comprobar que Docker Compose funciona.
+- `examples/hello/compose.yaml`: ejemplo con Alpine y PostgreSQL para comprobar que Docker Compose funciona.
 
 ## Notas Para El Curso
 

@@ -1,3 +1,27 @@
 services:
-  hello:
-    image: hello-world:latest
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: course
+      POSTGRES_USER: course
+      POSTGRES_PASSWORD: course
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U course -d course"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  alpine:
+    image: alpine:3.20
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: course
+    command:
+      - sh
+      - -lc
+      - |
+        apk add --no-cache postgresql-client
+        echo "Alpine conectado a PostgreSQL"
+        psql -h db -U course -d course -c "select 'compose funciona' as resultado;"
