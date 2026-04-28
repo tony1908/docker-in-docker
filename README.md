@@ -91,6 +91,40 @@ docker compose version
 docker compose -f examples/hello/compose.yaml up --abort-on-container-exit --exit-code-from alpine
 ```
 
+## Entorno Persistente Y Copiar Imágenes Del Host
+
+Para mantener imágenes y contenedores aunque reinicies el entorno DinD, usa el contenedor persistente. Este contenedor se crea con nombre fijo y con un volumen montado en `/var/lib/docker`.
+
+```bash
+make dind-start
+```
+
+Puedes copiar una imagen desde Docker en tu máquina host hacia el Docker interno del contenedor con un pipe directo:
+
+```bash
+make dind-copy IMAGE_TO_COPY=alpine:latest
+```
+
+Ese comando ejecuta el equivalente a:
+
+```bash
+docker save alpine:latest | docker exec -i course-dind docker load
+```
+
+Para entrar a una terminal dentro del contenedor persistente:
+
+```bash
+make dind-shell
+```
+
+Para detener y borrar el contenedor persistente:
+
+```bash
+make dind-rm
+```
+
+El volumen `course-dind-var-lib-docker` se conserva para que las imágenes internas sigan disponibles cuando vuelvas a ejecutar `make dind-start`.
+
 ## Usar Tus Propios Archivos Compose
 
 El comando anterior monta la carpeta actual en `/workspace`:
