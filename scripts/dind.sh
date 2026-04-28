@@ -73,7 +73,7 @@ copy_image() {
   image="${1:-}"
   if [ -z "$image" ]; then
     echo "Missing image name." >&2
-    echo "Example: make dind-copy IMAGE_TO_COPY=alpine:latest" >&2
+    echo "Example: $0 copy-image alpine:latest" >&2
     exit 2
   fi
 

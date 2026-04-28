@@ -32,12 +32,6 @@ Importante: como el contenedor necesita levantar su propio Docker daemon, debe e
 docker build -t docker-compose-in-docker:local .
 ```
 
-También puedes usar:
-
-```bash
-make build
-```
-
 ## Probar Que Funciona
 
 ```bash
@@ -47,7 +41,10 @@ docker run --rm --privileged docker-compose-in-docker:local docker compose versi
 O con el ejemplo incluido:
 
 ```bash
-make check
+docker run --rm --privileged \
+  -v "$PWD:/workspace" \
+  docker-compose-in-docker:local \
+  sh -lc 'docker version && docker compose version && cd examples/hello && docker compose up --abort-on-container-exit'
 ```
 
 Ese comando arranca el contenedor, verifica Docker, verifica Docker Compose y ejecuta el archivo `examples/hello/compose.yaml`.
@@ -77,12 +74,6 @@ docker run --rm -it --privileged \
   docker-compose-in-docker:local
 ```
 
-También puedes usar:
-
-```bash
-make shell
-```
-
 Dentro del contenedor puedes ejecutar:
 
 ```bash
@@ -96,16 +87,24 @@ docker compose -f examples/hello/compose.yaml up --abort-on-container-exit --exi
 Para mantener imágenes y contenedores aunque reinicies el entorno DinD, usa el contenedor persistente. Este contenedor se crea con nombre fijo y con un volumen montado en `/var/lib/docker`.
 
 ```bash
-make dind-start
+docker volume create course-dind-var-lib-docker
+
+docker run -d \
+  --privileged \
+  --name course-dind \
+  -v course-dind-var-lib-docker:/var/lib/docker \
+  -v "$PWD:/workspace" \
+  docker-compose-in-docker:local \
+  sh -c 'trap "exit 0" TERM INT; while :; do sleep 86400 & wait "$!"; done'
+```
+
+Si el contenedor ya existe y está detenido, puedes volver a iniciarlo:
+
+```bash
+docker start course-dind
 ```
 
 Puedes copiar una imagen desde Docker en tu máquina host hacia el Docker interno del contenedor con un pipe directo:
-
-```bash
-make dind-copy IMAGE_TO_COPY=alpine:latest
-```
-
-Ese comando ejecuta el equivalente a:
 
 ```bash
 docker save alpine:latest | docker exec -i course-dind docker load
@@ -114,16 +113,16 @@ docker save alpine:latest | docker exec -i course-dind docker load
 Para entrar a una terminal dentro del contenedor persistente:
 
 ```bash
-make dind-shell
+docker exec -it course-dind bash
 ```
 
 Para detener y borrar el contenedor persistente:
 
 ```bash
-make dind-rm
+docker rm -f course-dind
 ```
 
-El volumen `course-dind-var-lib-docker` se conserva para que las imágenes internas sigan disponibles cuando vuelvas a ejecutar `make dind-start`.
+El volumen `course-dind-var-lib-docker` se conserva para que las imágenes internas sigan disponibles cuando vuelvas a ejecutar `docker run` o `docker start`.
 
 ## Usar Tus Propios Archivos Compose
 
@@ -149,9 +148,8 @@ docker compose -f ruta/al/compose.yaml up
 
 ## Archivos Del Proyecto
 
-- `Dockerfile`: define la imagen con Docker, Docker Compose, Bash, Git y Make.
+- `Dockerfile`: define la imagen con Docker, Docker Compose, Bash y Git.
 - `entrypoint.sh`: inicia el Docker daemon interno y después ejecuta el comando solicitado.
-- `Makefile`: comandos cortos para construir, probar y abrir una terminal.
 - `examples/hello/compose.yaml`: ejemplo con Alpine y PostgreSQL para comprobar que Docker Compose funciona.
 
 ## Notas Para El Curso
