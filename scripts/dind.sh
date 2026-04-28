@@ -3,7 +3,6 @@ set -eu
 
 DIND_IMAGE="${DIND_IMAGE:-docker-compose-in-docker:local}"
 DIND_CONTAINER="${DIND_CONTAINER:-course-dind}"
-DIND_VOLUME="${DIND_VOLUME:-course-dind-var-lib-docker}"
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 
 usage() {
@@ -11,7 +10,7 @@ usage() {
 Usage: $0 COMMAND [ARGS]
 
 Commands:
-  start                 Start the persistent DinD container
+  start                 Start the DinD container
   copy-image IMAGE      Pipe a host Docker image into the DinD container
   shell                 Open a shell in the DinD container
   rm                    Stop and remove the DinD container
@@ -19,7 +18,6 @@ Commands:
 Environment:
   DIND_IMAGE            Image used for the DinD container (default: $DIND_IMAGE)
   DIND_CONTAINER        Container name (default: $DIND_CONTAINER)
-  DIND_VOLUME           Volume for /var/lib/docker (default: $DIND_VOLUME)
   WORKSPACE             Host directory mounted at /workspace (default: $WORKSPACE)
 EOF
 }
@@ -55,11 +53,9 @@ start_container() {
   if container_exists; then
     docker start "$DIND_CONTAINER" >/dev/null
   else
-    docker volume create "$DIND_VOLUME" >/dev/null
     docker run -d \
       --privileged \
       --name "$DIND_CONTAINER" \
-      -v "$DIND_VOLUME:/var/lib/docker" \
       -v "$WORKSPACE:/workspace" \
       "$DIND_IMAGE" \
       sh -c 'trap "exit 0" TERM INT; while :; do sleep 86400 & wait "$!"; done' >/dev/null
@@ -93,7 +89,7 @@ open_shell() {
 remove_container() {
   if container_exists; then
     docker rm -f "$DIND_CONTAINER" >/dev/null
-    echo "$DIND_CONTAINER removed. Volume $DIND_VOLUME was kept."
+    echo "$DIND_CONTAINER removed."
   else
     echo "$DIND_CONTAINER does not exist."
   fi
